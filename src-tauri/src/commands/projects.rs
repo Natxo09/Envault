@@ -4,9 +4,16 @@ use serde::Deserialize;
 use std::path::Path;
 use tauri::State;
 
+#[derive(Debug, Deserialize)]
+pub struct AddProjectParams {
+    pub path: String,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+}
+
 #[tauri::command]
-pub fn add_project(path: String, db: State<Database>) -> Result<Project, String> {
-    let path_obj = Path::new(&path);
+pub fn add_project(params: AddProjectParams, db: State<Database>) -> Result<Project, String> {
+    let path_obj = Path::new(&params.path);
 
     // Verify path exists and is a directory
     if !path_obj.exists() {
@@ -23,7 +30,10 @@ pub fn add_project(path: String, db: State<Database>) -> Result<Project, String>
         .unwrap_or("Unnamed Project")
         .to_string();
 
-    db.insert_project(&name, &path)
+    let icon = params.icon.unwrap_or_else(|| "folder".to_string());
+    let icon_color = params.icon_color.unwrap_or_else(|| "#737373".to_string());
+
+    db.insert_project(&name, &params.path, &icon, &icon_color)
         .map_err(|e| e.to_string())
 }
 

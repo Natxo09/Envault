@@ -43,6 +43,7 @@ impl Database {
     fn run_migrations(&self) -> SqliteResult<()> {
         let conn = self.conn.lock().unwrap();
 
+        // Create tables if they don't exist
         conn.execute_batch(
             "
             CREATE TABLE IF NOT EXISTS projects (
@@ -77,16 +78,30 @@ impl Database {
             "
         )?;
 
+        // Migration: Add icon and icon_color columns if they don't exist
+        let has_icon_column: bool = conn
+            .prepare("SELECT icon FROM projects LIMIT 1")
+            .is_ok();
+
+        if !has_icon_column {
+            conn.execute_batch(
+                "
+                ALTER TABLE projects ADD COLUMN icon TEXT DEFAULT 'folder';
+                ALTER TABLE projects ADD COLUMN icon_color TEXT DEFAULT '#737373';
+                "
+            )?;
+        }
+
         Ok(())
     }
 
     // Project methods
-    pub fn insert_project(&self, name: &str, path: &str) -> Result<Project, DatabaseError> {
+    pub fn insert_project(&self, name: &str, path: &str, icon: &str, icon_color: &str) -> Result<Project, DatabaseError> {
         let conn = self.conn.lock().unwrap();
 
         conn.execute(
-            "INSERT INTO projects (name, path) VALUES (?1, ?2)",
-            params![name, path],
+            "INSERT INTO projects (name, path, icon, icon_color) VALUES (?1, ?2, ?3, ?4)",
+            params![name, path, icon, icon_color],
         )?;
 
         let id = conn.last_insert_rowid();

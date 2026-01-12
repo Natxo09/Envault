@@ -122,6 +122,10 @@
     user-select: none;
     -webkit-user-select: none;
     cursor: default;
+    overscroll-behavior: none;
+  }
+  html {
+    overscroll-behavior: none;
   }
   /* Allow text selection in inputs and textareas */
   input,

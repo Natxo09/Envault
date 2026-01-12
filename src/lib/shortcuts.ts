@@ -26,6 +26,13 @@ export const DEFAULT_SHORTCUTS: Record<string, Shortcut> = {
     description: "Toggle Sidebar",
     category: "sidebar",
   },
+  addProject: {
+    id: "addProject",
+    key: "n",
+    metaKey: true,
+    description: "Add Project",
+    category: "global",
+  },
 };
 
 const SHORTCUTS_STORAGE_KEY = "envault-shortcuts";

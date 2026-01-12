@@ -10,17 +10,51 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSkeleton,
   SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Folder, Settings, Plus } from "lucide-react";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { Settings, Plus, Pencil, Trash2 } from "lucide-react";
+import { getIconById } from "@/components/ui/icon-picker";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useProjects, type Project, type UpdateProjectParams, type AddProjectParams } from "@/hooks/use-projects";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
-import { getShortcuts } from "@/lib/shortcuts";
+import { AddProjectDialog } from "@/components/projects/add-project-dialog";
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
+import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
+import { Kbd } from "@/components/ui/kbd";
+import { getShortcuts, formatShortcut, type Shortcut } from "@/lib/shortcuts";
 
-function AppSidebar({ onSettingsOpen }: { onSettingsOpen: () => void }) {
+function AppSidebar({
+  projects,
+  selectedProject,
+  isLoading,
+  shortcuts,
+  onProjectSelect,
+  onProjectEdit,
+  onProjectDelete,
+  onSettingsOpen,
+  onAddProject,
+}: {
+  projects: Project[];
+  selectedProject: Project | null;
+  isLoading: boolean;
+  shortcuts: Record<string, Shortcut>;
+  onProjectSelect: (project: Project) => void;
+  onProjectEdit: (project: Project) => void;
+  onProjectDelete: (project: Project) => void;
+  onSettingsOpen: () => void;
+  onAddProject: () => void;
+}) {
   return (
     <Sidebar variant="inset">
       {/* Drag region for macOS traffic lights - empty space */}
@@ -30,12 +64,64 @@ function AppSidebar({ onSettingsOpen }: { onSettingsOpen: () => void }) {
           <SidebarGroupLabel>Projects</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <Folder className="size-4" />
-                  <span>Example Project</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {isLoading ? (
+                <>
+                  <SidebarMenuSkeleton />
+                  <SidebarMenuSkeleton />
+                  <SidebarMenuSkeleton />
+                </>
+              ) : projects.length === 0 ? (
+                <div className="px-2 py-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    No projects yet
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={onAddProject}
+                  >
+                    <Plus className="size-4 mr-1" />
+                    Add Project
+                  </Button>
+                </div>
+              ) : (
+                projects.map((project) => {
+                  const ProjectIcon = getIconById(project.icon);
+                  return (
+                    <ContextMenu key={project.id}>
+                      <ContextMenuTrigger asChild>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            isActive={selectedProject?.id === project.id}
+                            onClick={() => onProjectSelect(project)}
+                          >
+                            <ProjectIcon
+                              className="size-4"
+                              style={{ color: project.icon_color }}
+                            />
+                            <span>{project.name}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onClick={() => onProjectEdit(project)}>
+                          <Pencil className="size-4 mr-2" />
+                          Edit
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
+                          onClick={() => onProjectDelete(project)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="size-4 mr-2" />
+                          Remove
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  );
+                })
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -43,15 +129,25 @@ function AppSidebar({ onSettingsOpen }: { onSettingsOpen: () => void }) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
+            <SidebarMenuButton onClick={onAddProject}>
               <Plus className="size-4" />
-              <span>Add Project</span>
+              <span className="flex-1">Add Project</span>
+              <span className="flex items-center gap-0.5 text-muted-foreground">
+                {formatShortcut(shortcuts.addProject).map((key, i) => (
+                  <Kbd key={i} size="sm">{key}</Kbd>
+                ))}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={onSettingsOpen}>
               <Settings className="size-4" />
-              <span>Settings</span>
+              <span className="flex-1">Settings</span>
+              <span className="flex items-center gap-0.5 text-muted-foreground">
+                {formatShortcut(shortcuts.openSettings).map((key, i) => (
+                  <Kbd key={i} size="sm">{key}</Kbd>
+                ))}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -62,8 +158,23 @@ function AppSidebar({ onSettingsOpen }: { onSettingsOpen: () => void }) {
 
 function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [addProjectOpen, setAddProjectOpen] = useState(false);
+  const [editProjectOpen, setEditProjectOpen] = useState(false);
+  const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const { toggleSidebar } = useSidebar();
   const shortcuts = getShortcuts();
+
+  const {
+    projects,
+    selectedProject,
+    setSelectedProject,
+    isLoading,
+    addProject,
+    deleteProject,
+    updateProject,
+  } = useProjects();
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -84,35 +195,115 @@ function AppContent() {
       handler: () => toggleSidebar(),
     },
     {
+      key: shortcuts.addProject.key,
+      metaKey: shortcuts.addProject.metaKey,
+      ctrlKey: shortcuts.addProject.ctrlKey,
+      shiftKey: shortcuts.addProject.shiftKey,
+      altKey: shortcuts.addProject.altKey,
+      handler: () => setAddProjectOpen(true),
+    },
+    {
       key: "Escape",
-      handler: () => setSettingsOpen(false),
+      handler: () => {
+        if (deleteProjectOpen) setDeleteProjectOpen(false);
+        else if (editProjectOpen) setEditProjectOpen(false);
+        else if (addProjectOpen) setAddProjectOpen(false);
+        else if (settingsOpen) setSettingsOpen(false);
+      },
     },
   ]);
 
+  const handleAddProject = async (params: AddProjectParams) => {
+    const project = await addProject(params);
+    setSelectedProject(project);
+  };
+
+  const handleEditProject = (project: Project) => {
+    setProjectToEdit(project);
+    setEditProjectOpen(true);
+  };
+
+  const handleSaveProject = async (params: UpdateProjectParams) => {
+    await updateProject(params);
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    setProjectToDelete(project);
+    setDeleteProjectOpen(true);
+  };
+
+  const handleConfirmDelete = async (project: Project) => {
+    await deleteProject(project.id);
+  };
+
   return (
     <>
-      <AppSidebar onSettingsOpen={() => setSettingsOpen(true)} />
+      <AppSidebar
+        projects={projects}
+        selectedProject={selectedProject}
+        isLoading={isLoading}
+        shortcuts={shortcuts}
+        onProjectSelect={setSelectedProject}
+        onProjectEdit={handleEditProject}
+        onProjectDelete={handleDeleteProject}
+        onSettingsOpen={() => setSettingsOpen(true)}
+        onAddProject={() => setAddProjectOpen(true)}
+      />
       {/* Top frame area - drag region with add button */}
       <div
         data-tauri-drag-region
         className="absolute top-0 right-2 left-[calc(var(--sidebar-width)+0.5rem)] h-8 flex items-center justify-end px-3 z-10"
       >
-        <Button variant="ghost" size="icon" className="size-7">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7"
+          onClick={() => setAddProjectOpen(true)}
+          title="Add Project (⌘N)"
+        >
           <Plus className="size-4" />
         </Button>
       </div>
       <SidebarInset className="md:peer-data-[variant=inset]:mt-8">
         <main className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center">
-            <p className="text-muted-foreground">
-              Select a project to manage environments
-            </p>
-          </div>
+          {selectedProject ? (
+            <div className="text-center">
+              <h2 className="text-xl font-semibold mb-2">
+                {selectedProject.name}
+              </h2>
+              <p className="text-sm text-muted-foreground font-mono">
+                {selectedProject.path}
+              </p>
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-muted-foreground">
+                Select a project to manage environments
+              </p>
+            </div>
+          )}
         </main>
       </SidebarInset>
 
-      {/* Settings Dialog */}
+      {/* Dialogs */}
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <AddProjectDialog
+        open={addProjectOpen}
+        onOpenChange={setAddProjectOpen}
+        onAdd={handleAddProject}
+      />
+      <EditProjectDialog
+        project={projectToEdit}
+        open={editProjectOpen}
+        onOpenChange={setEditProjectOpen}
+        onSave={handleSaveProject}
+      />
+      <DeleteProjectDialog
+        project={projectToDelete}
+        open={deleteProjectOpen}
+        onOpenChange={setDeleteProjectOpen}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 }
