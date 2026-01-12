@@ -12,7 +12,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Settings, Check, RefreshCw, Download } from "lucide-react";
+import { Settings, Check, RefreshCw, Download, CheckCircle } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { usePreferences } from "@/hooks/use-preferences";
 import { useUpdater } from "@/hooks/use-updater";
@@ -179,6 +179,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     downloading,
     progress,
     error: updateError,
+    upToDate,
     checkForUpdates,
     downloadAndInstall,
   } = useUpdater(false); // Don't auto-check, we'll do it manually
@@ -354,6 +355,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
             {updateError && (
               <p className="text-xs text-destructive">{updateError}</p>
+            )}
+
+            {upToDate && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="size-4 text-green-500" />
+                <span>You're up to date</span>
+              </div>
             )}
 
             {/* Check button */}

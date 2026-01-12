@@ -9,6 +9,7 @@ interface UpdateState {
   progress: number;
   update: Update | null;
   error: string | null;
+  lastChecked: number | null;
 }
 
 const initialState: UpdateState = {
@@ -18,7 +19,11 @@ const initialState: UpdateState = {
   progress: 0,
   update: null,
   error: null,
+  lastChecked: null,
 };
+
+// Check for updates every 6 hours
+const UPDATE_CHECK_INTERVAL = 6 * 60 * 60 * 1000;
 
 export function useUpdater(checkOnMount = true) {
   const [state, setState] = useState<UpdateState>(initialState);
@@ -34,17 +39,20 @@ export function useUpdater(checkOnMount = true) {
         checking: false,
         available: !!update,
         update,
+        lastChecked: Date.now(),
       }));
       if (update) {
         setDismissed(false);
       }
       return update;
     } catch (error) {
+      console.error("Update check failed:", error);
       setState((s) => ({
         ...s,
         checking: false,
         error:
           error instanceof Error ? error.message : "Error checking for updates",
+        lastChecked: Date.now(),
       }));
       return null;
     }
@@ -81,6 +89,7 @@ export function useUpdater(checkOnMount = true) {
       // Relaunch the application
       await relaunch();
     } catch (error) {
+      console.error("Update download failed:", error);
       setState((s) => ({
         ...s,
         downloading: false,
@@ -112,8 +121,23 @@ export function useUpdater(checkOnMount = true) {
     }
   }, [checkOnMount, checkForUpdates]);
 
+  // Periodic update check every 6 hours
+  useEffect(() => {
+    if (!checkOnMount) return;
+
+    const interval = setInterval(() => {
+      checkForUpdates();
+    }, UPDATE_CHECK_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [checkOnMount, checkForUpdates]);
+
+  // Computed: up to date when checked, no update available, and no error
+  const upToDate = state.lastChecked !== null && !state.available && !state.error;
+
   return {
     ...state,
+    upToDate,
     dismissed,
     checkForUpdates,
     downloadAndInstall,
