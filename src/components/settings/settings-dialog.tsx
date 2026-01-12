@@ -9,9 +9,11 @@ import {
 import { Label } from "@/components/ui/label";
 import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Settings, Check } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { usePreferences } from "@/hooks/use-preferences";
 import { getShortcutsByCategory, formatShortcut, type Shortcut } from "@/lib/shortcuts";
 
 interface SettingsDialogProps {
@@ -166,6 +168,7 @@ const categoryLabels: Record<string, string> = {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme();
+  const { toastsEnabled, setToastsEnabled } = usePreferences();
   const shortcutsByCategory = getShortcutsByCategory();
   const [focusedIndex, setFocusedIndex] = useState(() =>
     themeOptions.findIndex(o => o.value === theme)
@@ -257,6 +260,25 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   onClick={() => setTheme(option.value)}
                 />
               ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Notifications Section */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Notifications</Label>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-sm">Toast notifications</span>
+                <p className="text-xs text-muted-foreground">
+                  Show feedback messages for actions
+                </p>
+              </div>
+              <Switch
+                checked={toastsEnabled}
+                onCheckedChange={setToastsEnabled}
+              />
             </div>
           </div>
 
