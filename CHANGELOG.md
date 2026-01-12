@@ -1,0 +1,45 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.1] - 2026-01-12
+
+### Added
+- Logo and screenshot to README
+- Auto-publish releases CI workflow
+
+## [0.1.0] - 2026-01-12
+
+### Added
+- **Project Management**: Add, edit, and delete projects with custom icons and colors
+- **Environment Files**: Scan, view, and activate `.env` files with keyboard navigation
+- **Settings Dialog**: Theme selector (Light/Dark/System) and keyboard shortcuts configuration
+- **Keyboard Navigation**: Full keyboard support with customizable shortcuts
+  - `Cmd/Ctrl+N`: Add new project
+  - `Cmd/Ctrl+,`: Open settings
+  - `Cmd/Ctrl+B`: Toggle sidebar
+  - `Arrow keys` / `J/K`: Navigate lists
+  - `A`: Activate environment
+  - `Cmd/Ctrl+C`: Copy file content
+  - `Cmd/Ctrl+R`: Refresh files
+- **Toast Notifications**: Visual feedback for actions (can be toggled in settings)
+- **Smooth Refresh**: Animation and selection preservation when refreshing
+- **Context Menu**: Right-click on projects for quick actions
+- **Cross-platform Support**: macOS, Windows, and Linux builds
+
+### Fixed
+- Theme keyboard navigation and category titles in settings
+- Small window behavior and scrolling
+- Focus index sync on click with improved UI feedback
+- Flickering when navigating and selecting env files
+
+### Infrastructure
+- GitHub Actions workflows for CI and releases
+- SQLite database with migrations for project persistence
+- Tauri commands for project and env file management
+
+[0.1.1]: https://github.com/Natxo09/envault/releases/tag/v0.1.1
+[0.1.0]: https://github.com/Natxo09/envault/releases/tag/v0.1.0
