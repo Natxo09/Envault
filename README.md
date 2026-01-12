@@ -1,6 +1,13 @@
-# Envault
+<p align="center">
+  <img src="src-tauri/icons/128x128.png" alt="Envault Logo" width="80" />
+</p>
 
-A lightweight desktop application for managing environment files across your projects. Built with Tauri, React, and Rust.
+<h1 align="center">Envault</h1>
+
+<p align="center">
+  A lightweight desktop application for managing environment files across your projects.<br/>
+  Built with Tauri, React, and Rust.
+</p>
 
 ## Overview
 
@@ -16,9 +23,11 @@ Envault helps developers manage multiple `.env` files across different projects.
 - **Native Performance**: Built with Tauri for minimal resource usage
 - **Cross-Platform**: Works on macOS, Windows, and Linux
 
-## Screenshots
+## Screenshot
 
-*Coming soon*
+<p align="center">
+  <img src="assets/screenshot.png" alt="Envault Screenshot" width="700" />
+</p>
 
 ## Installation
 
@@ -201,11 +210,17 @@ The project uses:
 
 ## Roadmap
 
+- [ ] Homebrew installation support
+- [ ] Create and edit .env files directly
 - [ ] Environment variable diff view
 - [ ] Search across all environment files
 - [ ] Environment templates
 - [ ] Import/export configurations
 - [ ] Encrypted secrets support
+
+## Help Wanted
+
+The current logo is temporary. If you are a designer and would like to contribute a logo for Envault, please open an issue or submit a pull request. Any help is appreciated.
 
 ## License
 
