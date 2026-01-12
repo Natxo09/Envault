@@ -211,11 +211,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           scrollContainerRef.current?.scrollBy({ top: -scrollAmount, behavior: "smooth" });
           break;
         case "Enter":
-          // Only handle if not on a button (to avoid double-triggering)
-          if ((e.target as HTMLElement).tagName !== "BUTTON") {
-            e.preventDefault();
-            setTheme(themeOptions[focusedIndex].value);
-          }
+          e.preventDefault();
+          setTheme(themeOptions[focusedIndex].value);
           break;
       }
     };
@@ -289,7 +286,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <Label className="text-sm font-medium">Keyboard Shortcuts</Label>
             {Object.entries(shortcutsByCategory).map(([category, shortcuts]) => (
               <div key={category} className="space-y-1">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
                   {categoryLabels[category] || category}
                 </span>
                 <div className="space-y-0.5">
