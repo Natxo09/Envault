@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,23 +22,30 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Settings, Plus, Pencil, Trash2 } from "lucide-react";
+import { Toaster } from "@/components/ui/sonner";
 import { getIconById } from "@/components/ui/icon-picker";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useProjects, type Project, type UpdateProjectParams, type AddProjectParams } from "@/hooks/use-projects";
+import { useFocusManager } from "@/hooks/use-focus-manager";
+import { useEnvFiles } from "@/hooks/use-env-files";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
 import { AddProjectDialog } from "@/components/projects/add-project-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
+import { EnvFilesPanel } from "@/components/env-files";
 import { Kbd } from "@/components/ui/kbd";
 import { getShortcuts, formatShortcut, type Shortcut } from "@/lib/shortcuts";
+import { cn } from "@/lib/utils";
 
 function AppSidebar({
   projects,
   selectedProject,
   isLoading,
   shortcuts,
+  focusedIndex,
+  isActive,
   onProjectSelect,
   onProjectEdit,
   onProjectDelete,
@@ -49,6 +56,8 @@ function AppSidebar({
   selectedProject: Project | null;
   isLoading: boolean;
   shortcuts: Record<string, Shortcut>;
+  focusedIndex: number;
+  isActive: boolean;
   onProjectSelect: (project: Project) => void;
   onProjectEdit: (project: Project) => void;
   onProjectDelete: (project: Project) => void;
@@ -61,7 +70,16 @@ function AppSidebar({
       <div data-tauri-drag-region className="h-10 w-full shrink-0" />
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupLabel className="flex items-center justify-between">
+            <span>Projects</span>
+            {isActive && (
+              <span className="flex items-center gap-0.5 font-normal">
+                <Kbd size="sm">↑↓</Kbd>
+                <Kbd size="sm">⏎</Kbd>
+                <Kbd size="sm">Tab</Kbd>
+              </span>
+            )}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {isLoading ? (
@@ -86,15 +104,20 @@ function AppSidebar({
                   </Button>
                 </div>
               ) : (
-                projects.map((project) => {
+                projects.map((project, index) => {
                   const ProjectIcon = getIconById(project.icon);
+                  const isFocused = isActive && index === focusedIndex;
+                  const isSelected = selectedProject?.id === project.id;
                   return (
                     <ContextMenu key={project.id}>
                       <ContextMenuTrigger asChild>
                         <SidebarMenuItem>
                           <SidebarMenuButton
-                            isActive={selectedProject?.id === project.id}
+                            isActive={isSelected}
                             onClick={() => onProjectSelect(project)}
+                            className={cn(
+                              isFocused && "bg-accent ring-2 ring-primary ring-inset"
+                            )}
                           >
                             <ProjectIcon
                               className="size-4"
@@ -174,9 +197,95 @@ function AppContent() {
     addProject,
     deleteProject,
     updateProject,
+    refetch: refreshProjects,
   } = useProjects();
 
-  // Keyboard shortcuts
+  const {
+    envFiles,
+    selectedEnvFile,
+    fileContent,
+    isLoading: isLoadingEnvFiles,
+    isLoadingContent,
+    error: envError,
+    scanEnvFiles,
+    selectEnvFile,
+    activateEnvFile,
+    clearSelection,
+    clearError,
+  } = useEnvFiles();
+
+  // Scan env files when selected project changes (not when active_environment changes)
+  useEffect(() => {
+    if (selectedProject) {
+      scanEnvFiles(selectedProject.path, selectedProject.active_environment);
+    }
+  }, [selectedProject?.id, selectedProject?.path, scanEnvFiles]);
+
+  // Check if any dialog is open
+  const isDialogOpen = settingsOpen || addProjectOpen || editProjectOpen || deleteProjectOpen;
+
+  // Focus manager callbacks
+  const handleSidebarSelect = useCallback((index: number) => {
+    if (projects[index]) {
+      setSelectedProject(projects[index]);
+    }
+  }, [projects, setSelectedProject]);
+
+  const handleSidebarEdit = useCallback((index: number) => {
+    if (projects[index]) {
+      setProjectToEdit(projects[index]);
+      setEditProjectOpen(true);
+    }
+  }, [projects]);
+
+  const handleSidebarDelete = useCallback((index: number) => {
+    if (projects[index]) {
+      setProjectToDelete(projects[index]);
+      setDeleteProjectOpen(true);
+    }
+  }, [projects]);
+
+  const handleEnvListSelect = useCallback((index: number) => {
+    if (envFiles[index]) {
+      selectEnvFile(envFiles[index]);
+    }
+  }, [envFiles, selectEnvFile]);
+
+  const handleEnvListActivate = useCallback(async (index: number) => {
+    const file = envFiles[index];
+    if (file && selectedProject && file.name !== ".env" && !file.is_active) {
+      try {
+        await activateEnvFile(selectedProject.id, file.name);
+        // Update selectedProject locally (optimistic) - no need for full refresh
+        setSelectedProject({
+          ...selectedProject,
+          active_environment: file.name,
+        });
+      } catch (err) {
+        console.error("Failed to activate:", err);
+      }
+    }
+  }, [envFiles, selectedProject, activateEnvFile, setSelectedProject]);
+
+  const handleEnvListRefresh = useCallback(() => {
+    if (selectedProject) {
+      scanEnvFiles(selectedProject.path, selectedProject.active_environment);
+    }
+  }, [selectedProject, scanEnvFiles]);
+
+  const { activeZone, sidebarIndex, envListIndex } = useFocusManager({
+    sidebarItemCount: projects.length,
+    envListItemCount: envFiles.length,
+    onSidebarSelect: handleSidebarSelect,
+    onSidebarEdit: handleSidebarEdit,
+    onSidebarDelete: handleSidebarDelete,
+    onEnvListSelect: handleEnvListSelect,
+    onEnvListActivate: handleEnvListActivate,
+    onEnvListRefresh: handleEnvListRefresh,
+    enabled: !isDialogOpen,
+  });
+
+  // App-level keyboard shortcuts (these work even with focus manager)
   useKeyboardShortcuts([
     {
       key: shortcuts.openSettings.key,
@@ -243,6 +352,8 @@ function AppContent() {
         selectedProject={selectedProject}
         isLoading={isLoading}
         shortcuts={shortcuts}
+        focusedIndex={sidebarIndex}
+        isActive={activeZone === "sidebar"}
         onProjectSelect={setSelectedProject}
         onProjectEdit={handleEditProject}
         onProjectDelete={handleDeleteProject}
@@ -276,18 +387,27 @@ function AppContent() {
         </div>
       </div>
       <SidebarInset className="md:peer-data-[variant=inset]:mt-8">
-        <main className="flex-1 flex items-center justify-center p-4">
+        <main className="flex-1 p-4 overflow-auto">
           {selectedProject ? (
-            <div className="text-center">
-              <h2 className="text-xl font-semibold mb-2">
-                {selectedProject.name}
-              </h2>
-              <p className="text-sm text-muted-foreground font-mono">
-                {selectedProject.path}
-              </p>
-            </div>
+            <EnvFilesPanel
+              project={selectedProject}
+              envFiles={envFiles}
+              selectedEnvFile={selectedEnvFile}
+              fileContent={fileContent}
+              isLoading={isLoadingEnvFiles}
+              isLoadingContent={isLoadingContent}
+              error={envError}
+              focusedIndex={envListIndex}
+              isActive={activeZone === "envList"}
+              onSelect={selectEnvFile}
+              onActivate={handleEnvListActivate}
+              onRefresh={handleEnvListRefresh}
+              onCloseViewer={clearSelection}
+              onClearError={clearError}
+              onProjectUpdate={refreshProjects}
+            />
           ) : (
-            <div className="text-center">
+            <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground">
                 Select a project to manage environments
               </p>
@@ -331,6 +451,7 @@ function App() {
       } as React.CSSProperties}
     >
       <AppContent />
+      <Toaster position="bottom-right" />
     </SidebarProvider>
   );
 }

@@ -21,6 +21,7 @@ pub fn run() {
             commands::scan_env_files,
             commands::activate_env,
             commands::get_active_env,
+            commands::read_env_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

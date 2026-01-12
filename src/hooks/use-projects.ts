@@ -37,6 +37,11 @@ export function useProjects() {
       setError(null);
       const result = await invoke<Project[]>("list_projects");
       setProjects(result);
+      // Update selectedProject with fresh data if it exists
+      setSelectedProject((current) => {
+        if (!current) return null;
+        return result.find((p) => p.id === current.id) ?? null;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

@@ -108,3 +108,18 @@ pub fn get_active_env(project_id: i64, db: State<Database>) -> Result<Option<Str
     db.get_active_environment(project_id)
         .map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn read_env_file(file_path: String) -> Result<String, String> {
+    let path = Path::new(&file_path);
+
+    if !path.exists() {
+        return Err("File does not exist".to_string());
+    }
+
+    if !path.is_file() {
+        return Err("Path is not a file".to_string());
+    }
+
+    fs::read_to_string(path).map_err(|e| e.to_string())
+}
