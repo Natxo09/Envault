@@ -26,6 +26,17 @@ Envault helps developers manage multiple `.env` files across different projects.
 
 Download the latest release for your platform from the [Releases](https://github.com/Natxo09/envault/releases) page.
 
+- **macOS (Apple Silicon):** `.dmg` file for arm64
+- **macOS (Intel):** `.dmg` file for x64
+- **Windows:** `.msi` or `.exe` installer
+- **Linux:** `.deb` or `.AppImage` file
+
+### Homebrew (Coming Soon)
+
+```bash
+brew install --cask envault
+```
+
 ### Build from Source
 
 #### Prerequisites
