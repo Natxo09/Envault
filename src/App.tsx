@@ -187,7 +187,7 @@ function AppContent() {
   const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const { toggleSidebar, state: sidebarState } = useSidebar();
+  const { toggleSidebar, state: sidebarState, isMobile, setOpen } = useSidebar();
   const shortcuts = getShortcuts();
 
   const {
@@ -223,6 +223,13 @@ function AppContent() {
       scanEnvFiles(selectedProject.path, selectedProject.active_environment);
     }
   }, [selectedProject?.id, selectedProject?.path, scanEnvFiles]);
+
+  // Auto-collapse sidebar when window is small (mobile breakpoint)
+  useEffect(() => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  }, [isMobile, setOpen]);
 
   // Check if any dialog is open
   const isDialogOpen = settingsOpen || addProjectOpen || editProjectOpen || deleteProjectOpen;
@@ -412,8 +419,8 @@ function AppContent() {
           )}
         </div>
       </div>
-      <SidebarInset className="md:peer-data-[variant=inset]:mt-8">
-        <main className="flex-1 p-4 overflow-auto">
+      <SidebarInset className="md:peer-data-[variant=inset]:mt-8 flex flex-col h-full">
+        <main className="flex-1 p-4 overflow-y-auto min-h-0 scrollbar-thin">
           {selectedProject ? (
             <EnvFilesPanel
               project={selectedProject}

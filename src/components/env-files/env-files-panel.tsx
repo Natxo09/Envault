@@ -62,7 +62,7 @@ export function EnvFilesPanel({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col pt-6">
       {/* Project Header */}
       <div className="flex items-center gap-3 mb-4 pb-4 border-b">
         <div className="size-10 rounded-lg bg-muted flex items-center justify-center">
