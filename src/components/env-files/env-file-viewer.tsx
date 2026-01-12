@@ -2,6 +2,8 @@ import { X, Copy, Check } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Kbd } from "@/components/ui/kbd";
+import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import type { EnvFile } from "@/hooks/use-env-files";
 
@@ -67,9 +69,11 @@ export function EnvFileViewer({
       await navigator.clipboard.writeText(content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      toast.success("Copied to clipboard");
       onCopy?.();
     } catch (err) {
       console.error("Failed to copy:", err);
+      toast.error("Failed to copy");
     }
   };
 
@@ -107,16 +111,20 @@ export function EnvFileViewer({
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="icon"
-            className="size-7"
+            size="sm"
+            className="h-7 px-2 gap-1.5"
             onClick={handleCopy}
-            title="Copy to clipboard"
+            title="Copy to clipboard (⌘C)"
           >
             {copied ? (
               <Check className="size-3.5 text-green-500" />
             ) : (
               <Copy className="size-3.5" />
             )}
+            <span className="flex items-center gap-0.5">
+              <Kbd size="sm">⌘</Kbd>
+              <Kbd size="sm">C</Kbd>
+            </span>
           </Button>
           <Button
             variant="ghost"

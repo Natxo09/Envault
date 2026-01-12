@@ -17,6 +17,7 @@ interface UseFocusManagerOptions {
   onEnvListSelect?: (index: number) => void;
   onEnvListActivate?: (index: number) => void;
   onEnvListRefresh?: () => void;
+  onEnvListCopy?: () => void;
   enabled?: boolean;
 }
 
@@ -29,6 +30,7 @@ export function useFocusManager({
   onEnvListSelect,
   onEnvListActivate,
   onEnvListRefresh,
+  onEnvListCopy,
   enabled = true,
 }: UseFocusManagerOptions) {
   const [state, setState] = useState<FocusState>({
@@ -209,6 +211,14 @@ export function useFocusManager({
           }
           break;
 
+        case "c":
+        case "C":
+          if (activeZone === "envList" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            onEnvListCopy?.();
+          }
+          break;
+
         case "1":
           if (e.metaKey || e.ctrlKey) {
             e.preventDefault();
@@ -243,6 +253,7 @@ export function useFocusManager({
     onEnvListSelect,
     onEnvListActivate,
     onEnvListRefresh,
+    onEnvListCopy,
     setActiveZone,
   ]);
 

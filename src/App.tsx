@@ -22,7 +22,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Settings, Plus, Pencil, Trash2 } from "lucide-react";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster, toast } from "@/components/ui/sonner";
 import { getIconById } from "@/components/ui/icon-picker";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -273,6 +273,18 @@ function AppContent() {
     }
   }, [selectedProject, scanEnvFiles]);
 
+  const handleEnvListCopy = useCallback(async () => {
+    if (fileContent) {
+      try {
+        await navigator.clipboard.writeText(fileContent);
+        toast.success("Copied to clipboard");
+      } catch (err) {
+        console.error("Failed to copy:", err);
+        toast.error("Failed to copy");
+      }
+    }
+  }, [fileContent]);
+
   const { activeZone, sidebarIndex, envListIndex } = useFocusManager({
     sidebarItemCount: projects.length,
     envListItemCount: envFiles.length,
@@ -282,6 +294,7 @@ function AppContent() {
     onEnvListSelect: handleEnvListSelect,
     onEnvListActivate: handleEnvListActivate,
     onEnvListRefresh: handleEnvListRefresh,
+    onEnvListCopy: handleEnvListCopy,
     enabled: !isDialogOpen,
   });
 

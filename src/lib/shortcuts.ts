@@ -6,16 +6,24 @@ export interface Shortcut {
   shiftKey?: boolean;
   altKey?: boolean;
   description: string;
-  category: "global" | "navigation" | "sidebar";
+  category: "global" | "projects" | "envFiles";
 }
 
 // Default shortcuts configuration
 export const DEFAULT_SHORTCUTS: Record<string, Shortcut> = {
+  // Global shortcuts
   openSettings: {
     id: "openSettings",
     key: ",",
     metaKey: true,
     description: "Open Settings",
+    category: "global",
+  },
+  addProject: {
+    id: "addProject",
+    key: "n",
+    metaKey: true,
+    description: "Add Project",
     category: "global",
   },
   toggleSidebar: {
@@ -24,14 +32,92 @@ export const DEFAULT_SHORTCUTS: Record<string, Shortcut> = {
     metaKey: true,
     shiftKey: true,
     description: "Toggle Sidebar",
-    category: "sidebar",
-  },
-  addProject: {
-    id: "addProject",
-    key: "n",
-    metaKey: true,
-    description: "Add Project",
     category: "global",
+  },
+  focusSidebar: {
+    id: "focusSidebar",
+    key: "1",
+    metaKey: true,
+    description: "Focus Projects",
+    category: "global",
+  },
+  focusEnvList: {
+    id: "focusEnvList",
+    key: "2",
+    metaKey: true,
+    description: "Focus Env Files",
+    category: "global",
+  },
+
+  // Projects shortcuts
+  navigateUp: {
+    id: "navigateUp",
+    key: "↑/K",
+    description: "Navigate Up",
+    category: "projects",
+  },
+  navigateDown: {
+    id: "navigateDown",
+    key: "↓/J",
+    description: "Navigate Down",
+    category: "projects",
+  },
+  selectProject: {
+    id: "selectProject",
+    key: "⏎",
+    description: "Select Project",
+    category: "projects",
+  },
+  editProject: {
+    id: "editProject",
+    key: "E",
+    description: "Edit Project",
+    category: "projects",
+  },
+  deleteProject: {
+    id: "deleteProject",
+    key: "⌫",
+    description: "Delete Project",
+    category: "projects",
+  },
+  switchToEnvList: {
+    id: "switchToEnvList",
+    key: "Tab",
+    description: "Switch to Env Files",
+    category: "projects",
+  },
+
+  // Env files shortcuts
+  viewEnvFile: {
+    id: "viewEnvFile",
+    key: "⏎",
+    description: "View File",
+    category: "envFiles",
+  },
+  activateEnv: {
+    id: "activateEnv",
+    key: "A",
+    description: "Activate Environment",
+    category: "envFiles",
+  },
+  copyEnvContent: {
+    id: "copyEnvContent",
+    key: "c",
+    metaKey: true,
+    description: "Copy Content",
+    category: "envFiles",
+  },
+  refreshEnvList: {
+    id: "refreshEnvList",
+    key: "R",
+    description: "Refresh List",
+    category: "envFiles",
+  },
+  switchToSidebar: {
+    id: "switchToSidebar",
+    key: "Tab",
+    description: "Switch to Projects",
+    category: "envFiles",
   },
 };
 
@@ -93,11 +179,15 @@ export function formatShortcut(shortcut: Shortcut): string[] {
     keys.push(isMac ? "⌥" : "Alt");
   }
 
-  // Format the key
-  let displayKey = shortcut.key.toUpperCase();
+  // Format the key - some keys are already formatted (symbols)
+  const symbolKeys = ["↑", "↓", "←", "→", "⏎", "⌫", "⇥"];
+  const isSymbol = symbolKeys.some(s => shortcut.key.includes(s));
+
+  let displayKey = isSymbol ? shortcut.key : shortcut.key.toUpperCase();
   if (shortcut.key === ",") displayKey = ",";
   if (shortcut.key === ".") displayKey = ".";
   if (shortcut.key === "Escape") displayKey = "Esc";
+  if (shortcut.key === "Tab") displayKey = "Tab";
 
   keys.push(displayKey);
 

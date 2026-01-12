@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Settings, Check } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
-import { getShortcuts, formatShortcut, type Shortcut } from "@/lib/shortcuts";
+import { getShortcutsByCategory, formatShortcut, type Shortcut } from "@/lib/shortcuts";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -21,11 +22,12 @@ interface SettingsDialogProps {
 interface ThemePreviewProps {
   variant: "light" | "dark" | "system";
   isSelected: boolean;
+  isFocused: boolean;
   onClick: () => void;
   label: string;
 }
 
-function ThemePreview({ variant, isSelected, onClick, label }: ThemePreviewProps) {
+function ThemePreview({ variant, isSelected, isFocused, onClick, label }: ThemePreviewProps) {
   const colors = {
     light: {
       bg: "bg-gray-100",
@@ -65,10 +67,10 @@ function ThemePreview({ variant, isSelected, onClick, label }: ThemePreviewProps
     <button
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col items-center gap-2 rounded-xl p-1.5 transition-all cursor-pointer",
-        isSelected
-          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-          : "hover:ring-2 hover:ring-muted-foreground/20 hover:ring-offset-2 hover:ring-offset-background"
+        "group relative flex flex-col items-center gap-2 rounded-xl p-1.5 cursor-pointer outline-none",
+        isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+        isFocused && !isSelected && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background",
+        !isSelected && !isFocused && "hover:ring-2 hover:ring-muted-foreground/20 hover:ring-offset-2 hover:ring-offset-background"
       )}
     >
       {/* Preview Card */}
@@ -156,14 +158,73 @@ const themeOptions = [
   { value: "system", label: "System" },
 ] as const;
 
+const categoryLabels: Record<string, string> = {
+  global: "Global",
+  projects: "Projects",
+  envFiles: "Env Files",
+};
+
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme();
-  const shortcuts = getShortcuts();
+  const shortcutsByCategory = getShortcutsByCategory();
+  const [focusedIndex, setFocusedIndex] = useState(() =>
+    themeOptions.findIndex(o => o.value === theme)
+  );
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reset focus index when dialog opens
+  useEffect(() => {
+    if (open) {
+      setFocusedIndex(themeOptions.findIndex(o => o.value === theme));
+    }
+  }, [open, theme]);
+
+  // Keyboard navigation for theme selection and scroll
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const scrollAmount = 60;
+
+      switch (e.key) {
+        case "ArrowLeft":
+          e.preventDefault();
+          setFocusedIndex(prev => Math.max(0, prev - 1));
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          setFocusedIndex(prev => Math.min(themeOptions.length - 1, prev + 1));
+          break;
+        case "j":
+        case "J":
+        case "ArrowDown":
+          e.preventDefault();
+          scrollContainerRef.current?.scrollBy({ top: scrollAmount, behavior: "smooth" });
+          break;
+        case "k":
+        case "K":
+        case "ArrowUp":
+          e.preventDefault();
+          scrollContainerRef.current?.scrollBy({ top: -scrollAmount, behavior: "smooth" });
+          break;
+        case "Enter":
+          // Only handle if not on a button (to avoid double-triggering)
+          if ((e.target as HTMLElement).tagName !== "BUTTON") {
+            e.preventDefault();
+            setTheme(themeOptions[focusedIndex].value);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, focusedIndex, setTheme]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
             Settings
@@ -171,17 +232,28 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           <DialogDescription>Customize the application</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto scrollbar-thin px-6 pb-6"
+        >
+          <div className="space-y-6">
           {/* Theme Section */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Theme</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Theme</Label>
+              <span className="flex items-center gap-0.5">
+                <Kbd size="sm">←→</Kbd>
+                <Kbd size="sm">⏎</Kbd>
+              </span>
+            </div>
             <div className="grid grid-cols-3 gap-3">
-              {themeOptions.map((option) => (
+              {themeOptions.map((option, index) => (
                 <ThemePreview
                   key={option.value}
                   variant={option.value}
                   label={option.label}
                   isSelected={theme === option.value}
+                  isFocused={index === focusedIndex}
                   onClick={() => setTheme(option.value)}
                 />
               ))}
@@ -191,13 +263,21 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           <Separator />
 
           {/* Keyboard Shortcuts Section */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label className="text-sm font-medium">Keyboard Shortcuts</Label>
-            <div className="space-y-1">
-              {Object.values(shortcuts).map((shortcut) => (
-                <ShortcutItem key={shortcut.id} shortcut={shortcut} />
-              ))}
-            </div>
+            {Object.entries(shortcutsByCategory).map(([category, shortcuts]) => (
+              <div key={category} className="space-y-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {categoryLabels[category] || category}
+                </span>
+                <div className="space-y-0.5">
+                  {shortcuts.map((shortcut) => (
+                    <ShortcutItem key={shortcut.id} shortcut={shortcut} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
           </div>
         </div>
       </DialogContent>
