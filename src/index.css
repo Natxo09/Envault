@@ -121,3 +121,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Tauri window drag regions */
+*[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+/* Exclude interactive elements from drag */
+*[data-tauri-drag-region] button,
+*[data-tauri-drag-region] a,
+*[data-tauri-drag-region] input,
+*[data-tauri-drag-region] [role="button"],
+*[data-no-drag] {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
