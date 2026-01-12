@@ -66,6 +66,6 @@ jobs:
             **macOS (Intel):** Download the `.dmg` file for x64
             **Windows:** Download the `.msi` or `.exe` installer
             **Linux:** Download the `.deb` or `.AppImage` file
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
