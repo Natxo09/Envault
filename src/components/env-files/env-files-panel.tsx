@@ -1,7 +1,7 @@
-import { FolderOpen } from "lucide-react";
 import { EnvFilesList } from "./env-files-list";
 import { EnvFileViewer } from "./env-file-viewer";
 import { toast } from "@/components/ui/sonner";
+import { getIconById } from "@/components/ui/icon-picker";
 import type { Project } from "@/hooks/use-projects";
 import type { EnvFile } from "@/hooks/use-env-files";
 
@@ -16,7 +16,7 @@ interface EnvFilesPanelProps {
   error: string | null;
   focusedIndex: number;
   isActive: boolean;
-  onSelect: (file: EnvFile) => void;
+  onSelect: (file: EnvFile, index: number) => void;
   onActivate: (index: number) => void;
   onRefresh: () => void;
   onCloseViewer: () => void;
@@ -66,7 +66,10 @@ export function EnvFilesPanel({
       {/* Project Header */}
       <div className="flex items-center gap-3 mb-4 pb-4 border-b">
         <div className="size-10 rounded-lg bg-muted flex items-center justify-center">
-          <FolderOpen className="size-5 text-muted-foreground" />
+          {(() => {
+            const ProjectIcon = getIconById(project.icon);
+            return <ProjectIcon className="size-5" style={{ color: project.icon_color }} />;
+          })()}
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="font-semibold truncate">{project.name}</h2>

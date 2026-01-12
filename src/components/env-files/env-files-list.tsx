@@ -19,7 +19,7 @@ interface EnvFilesListProps {
   isLoading: boolean;
   isRefreshing: boolean;
   isActive: boolean;
-  onSelect: (file: EnvFile) => void;
+  onSelect: (file: EnvFile, index: number) => void;
   onActivate: (index: number) => void;
   onRefresh: () => void;
 }
@@ -117,7 +117,7 @@ export function EnvFilesList({
                   isSelected && "bg-accent",
                   isFocused && "bg-accent ring-2 ring-primary ring-inset"
                 )}
-                onClick={() => onSelect(file)}
+                onClick={() => onSelect(file, index)}
               >
                 {isMainEnv ? (
                   <Lock className="size-4 text-muted-foreground shrink-0" />
@@ -139,7 +139,7 @@ export function EnvFilesList({
               </button>
             </ContextMenuTrigger>
             <ContextMenuContent>
-              <ContextMenuItem onClick={() => onSelect(file)}>
+              <ContextMenuItem onClick={() => onSelect(file, index)}>
                 <FileText className="size-4 mr-2" />
                 View Contents
               </ContextMenuItem>

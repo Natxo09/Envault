@@ -29,11 +29,12 @@ import { useTheme } from "@/hooks/use-theme";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useProjects, type Project, type UpdateProjectParams, type AddProjectParams } from "@/hooks/use-projects";
 import { useFocusManager } from "@/hooks/use-focus-manager";
-import { useEnvFiles } from "@/hooks/use-env-files";
+import { useEnvFiles, type EnvFile } from "@/hooks/use-env-files";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
 import { AddProjectDialog } from "@/components/projects/add-project-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
+import { FloatingProjects } from "@/components/projects/floating-projects";
 import { EnvFilesPanel } from "@/components/env-files";
 import { Kbd } from "@/components/ui/kbd";
 import { getShortcuts, formatShortcut, type Shortcut } from "@/lib/shortcuts";
@@ -46,7 +47,7 @@ function AppSidebar({
   shortcuts,
   focusedIndex,
   isActive,
-  onProjectSelect,
+  onProjectClick,
   onProjectEdit,
   onProjectDelete,
   onSettingsOpen,
@@ -58,7 +59,7 @@ function AppSidebar({
   shortcuts: Record<string, Shortcut>;
   focusedIndex: number;
   isActive: boolean;
-  onProjectSelect: (project: Project) => void;
+  onProjectClick: (project: Project, index: number) => void;
   onProjectEdit: (project: Project) => void;
   onProjectDelete: (project: Project) => void;
   onSettingsOpen: () => void;
@@ -114,7 +115,7 @@ function AppSidebar({
                         <SidebarMenuItem>
                           <SidebarMenuButton
                             isActive={isSelected}
-                            onClick={() => onProjectSelect(project)}
+                            onClick={() => onProjectClick(project, index)}
                             className={cn(
                               isFocused && "bg-accent ring-2 ring-primary ring-inset"
                             )}
@@ -186,7 +187,7 @@ function AppContent() {
   const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, state: sidebarState } = useSidebar();
   const shortcuts = getShortcuts();
 
   const {
@@ -288,7 +289,7 @@ function AppContent() {
     }
   }, [fileContent]);
 
-  const { activeZone, sidebarIndex, envListIndex } = useFocusManager({
+  const { activeZone, sidebarIndex, envListIndex, navigationTrigger, setSidebarIndex, setEnvListIndex } = useFocusManager({
     sidebarItemCount: projects.length,
     envListItemCount: envFiles.length,
     onSidebarSelect: handleSidebarSelect,
@@ -300,6 +301,16 @@ function AppContent() {
     onEnvListCopy: handleEnvListCopy,
     enabled: !isDialogOpen,
   });
+
+  const handleProjectClick = useCallback((project: Project, index: number) => {
+    setSelectedProject(project);
+    setSidebarIndex(index);
+  }, [setSelectedProject, setSidebarIndex]);
+
+  const handleEnvFileClick = useCallback((file: EnvFile, index: number) => {
+    selectEnvFile(file);
+    setEnvListIndex(index);
+  }, [selectEnvFile, setEnvListIndex]);
 
   // App-level keyboard shortcuts (these work even with focus manager)
   useKeyboardShortcuts([
@@ -370,36 +381,35 @@ function AppContent() {
         shortcuts={shortcuts}
         focusedIndex={sidebarIndex}
         isActive={activeZone === "sidebar"}
-        onProjectSelect={setSelectedProject}
+        onProjectClick={handleProjectClick}
         onProjectEdit={handleEditProject}
         onProjectDelete={handleDeleteProject}
         onSettingsOpen={() => setSettingsOpen(true)}
         onAddProject={() => setAddProjectOpen(true)}
       />
-      {/* Top frame area - drag region with project indicator and add button */}
+      {/* Top frame area - drag region with project indicator */}
       <div
         data-tauri-drag-region
-        className="absolute top-0 right-2 h-8 flex items-center justify-center px-3 z-10 transition-[left] duration-150 ease-linear peer-data-[state=expanded]:left-[calc(var(--sidebar-width)+0.5rem)] peer-data-[state=collapsed]:left-[calc(var(--sidebar-width-icon)+1rem)]"
+        className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center px-3 z-10"
       >
-        {selectedProject ? (
-          <div data-tauri-drag-region className="flex items-center gap-1.5 text-sm pointer-events-none">
-            {(() => {
-              const Icon = getIconById(selectedProject.icon);
-              return <Icon className="size-3.5" style={{ color: selectedProject.icon_color }} />;
-            })()}
-            <span className="text-muted-foreground">{selectedProject.name}</span>
-          </div>
-        ) : null}
-        <div data-tauri-drag-region className="absolute right-3 top-1/2 -translate-y-1/2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            onClick={() => setAddProjectOpen(true)}
-            title="Add Project (⌘N)"
-          >
-            <Plus className="size-4" />
-          </Button>
+        <div data-tauri-drag-region className="flex items-center gap-1.5 text-sm pointer-events-none">
+          {selectedProject ? (
+            <>
+              {(() => {
+                const Icon = getIconById(selectedProject.icon);
+                return <Icon className="size-3.5" style={{ color: selectedProject.icon_color }} />;
+              })()}
+              <span className="text-muted-foreground">{selectedProject.name}</span>
+              {selectedProject.active_environment && (
+                <>
+                  <span className="text-muted-foreground/50">›</span>
+                  <span className="text-muted-foreground/70">{selectedProject.active_environment}</span>
+                </>
+              )}
+            </>
+          ) : (
+            <span className="text-muted-foreground font-medium">envault</span>
+          )}
         </div>
       </div>
       <SidebarInset className="md:peer-data-[variant=inset]:mt-8">
@@ -416,7 +426,7 @@ function AppContent() {
               error={envError}
               focusedIndex={envListIndex}
               isActive={activeZone === "envList"}
-              onSelect={selectEnvFile}
+              onSelect={handleEnvFileClick}
               onActivate={handleEnvListActivate}
               onRefresh={handleEnvListRefresh}
               onCloseViewer={clearSelection}
@@ -432,6 +442,16 @@ function AppContent() {
           )}
         </main>
       </SidebarInset>
+
+      {/* Floating Projects (when sidebar is collapsed) */}
+      <FloatingProjects
+        projects={projects}
+        selectedProject={selectedProject}
+        focusedIndex={sidebarIndex}
+        isActive={activeZone === "sidebar"}
+        sidebarCollapsed={sidebarState === "collapsed"}
+        navigationTrigger={navigationTrigger}
+      />
 
       {/* Dialogs */}
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

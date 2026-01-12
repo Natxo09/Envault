@@ -6,6 +6,7 @@ interface FocusState {
   activeZone: FocusZone;
   sidebarIndex: number;
   envListIndex: number;
+  navigationTrigger: number; // Increments on any navigation attempt
 }
 
 interface UseFocusManagerOptions {
@@ -37,6 +38,7 @@ export function useFocusManager({
     activeZone: "sidebar",
     sidebarIndex: 0,
     envListIndex: 0,
+    navigationTrigger: 0,
   });
 
   // Clamp indices when item counts change
@@ -72,6 +74,7 @@ export function useFocusManager({
         return {
           ...prev,
           sidebarIndex: Math.max(0, prev.sidebarIndex - 1),
+          navigationTrigger: prev.navigationTrigger + 1,
         };
       } else {
         return {
@@ -88,6 +91,7 @@ export function useFocusManager({
         return {
           ...prev,
           sidebarIndex: Math.min(sidebarItemCount - 1, prev.sidebarIndex + 1),
+          navigationTrigger: prev.navigationTrigger + 1,
         };
       } else {
         return {
@@ -261,6 +265,7 @@ export function useFocusManager({
     activeZone: state.activeZone,
     sidebarIndex: state.sidebarIndex,
     envListIndex: state.envListIndex,
+    navigationTrigger: state.navigationTrigger,
     setActiveZone,
     setSidebarIndex,
     setEnvListIndex,
