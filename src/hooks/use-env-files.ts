@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
 export interface EnvFile {
@@ -16,10 +16,14 @@ export function useEnvFiles() {
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Ref to track currently selected file path (avoids re-loading the same file)
+  const selectedPathRef = useRef<string | null>(null);
+
   const scanEnvFiles = useCallback(
     async (projectPath: string, activeEnv?: string | null) => {
       setIsLoading(true);
       setError(null);
+      selectedPathRef.current = null;
       setSelectedEnvFile(null);
       setFileContent(null);
 
@@ -40,6 +44,13 @@ export function useEnvFiles() {
   );
 
   const selectEnvFile = useCallback(async (file: EnvFile | null) => {
+    // Skip if selecting the same file (prevents flickering on repeated Enter)
+    if (file && selectedPathRef.current === file.path) {
+      return;
+    }
+
+    const hadPreviousContent = selectedPathRef.current !== null;
+    selectedPathRef.current = file?.path ?? null;
     setSelectedEnvFile(file);
 
     if (!file) {
@@ -47,7 +58,12 @@ export function useEnvFiles() {
       return;
     }
 
-    setIsLoadingContent(true);
+    // Only show loading skeleton on first load, not when switching files
+    // This keeps the previous content visible for a smoother transition
+    if (!hadPreviousContent) {
+      setIsLoadingContent(true);
+    }
+
     try {
       const content = await invoke<string>("read_env_file", {
         filePath: file.path,
@@ -85,6 +101,7 @@ export function useEnvFiles() {
   );
 
   const clearSelection = useCallback(() => {
+    selectedPathRef.current = null;
     setSelectedEnvFile(null);
     setFileContent(null);
   }, []);

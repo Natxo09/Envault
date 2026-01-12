@@ -109,7 +109,7 @@ export function EnvFilesList({
             <ContextMenuTrigger asChild>
               <button
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left outline-none",
+                  "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left outline-none",
                   "hover:bg-accent",
                   isSelected && "bg-accent",
                   isFocused && "bg-accent ring-2 ring-primary ring-inset"
