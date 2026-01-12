@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 
 interface Preferences {
   toastsEnabled: boolean;
+  autoCheckUpdates: boolean;
 }
 
 const PREFERENCES_STORAGE_KEY = "envault-preferences";
 
 const DEFAULT_PREFERENCES: Preferences = {
   toastsEnabled: true,
+  autoCheckUpdates: true,
 };
 
 function getStoredPreferences(): Preferences {
@@ -44,8 +46,18 @@ export function usePreferences() {
     });
   }, []);
 
+  const setAutoCheckUpdates = useCallback((enabled: boolean) => {
+    setPreferences((prev) => {
+      const newPrefs = { ...prev, autoCheckUpdates: enabled };
+      savePreferences(newPrefs);
+      return newPrefs;
+    });
+  }, []);
+
   return {
     toastsEnabled: preferences.toastsEnabled,
     setToastsEnabled,
+    autoCheckUpdates: preferences.autoCheckUpdates,
+    setAutoCheckUpdates,
   };
 }

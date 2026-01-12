@@ -36,6 +36,7 @@ import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 import { FloatingProjects } from "@/components/projects/floating-projects";
 import { EnvFilesPanel } from "@/components/env-files";
+import { UpdateNotification } from "@/components/updates";
 import { Kbd } from "@/components/ui/kbd";
 import { getShortcuts, formatShortcut, type Shortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
@@ -415,7 +416,7 @@ function AppContent() {
               )}
             </>
           ) : (
-            <span className="text-muted-foreground font-medium">envault</span>
+            <span className="text-muted-foreground font-medium">Envault</span>
           )}
         </div>
       </div>
@@ -496,6 +497,7 @@ function App() {
     >
       <AppContent />
       <Toaster position="bottom-right" />
+      <UpdateNotification />
     </SidebarProvider>
   );
 }

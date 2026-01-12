@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "envault",
-  "version": "0.1.1",
+  "productName": "Envault",
+  "version": "0.2.0",
   "identifier": "com.natxo.envault",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -37,6 +37,15 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdFOTdFODBGNTc5MkQ3MTkKUldRWjE1SlhEK2lYZnVUdG1yZ202VFJkWW1ESXpPT1FvWmc2VVlzZ1RpREdiQUdZRFArOVljM00K",
+      "endpoints": [
+        "https://github.com/Natxo09/envault/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

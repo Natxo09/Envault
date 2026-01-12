@@ -54,6 +54,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Envault ${{ github.ref_name }}'
@@ -66,6 +68,11 @@ jobs:
             **macOS (Intel):** Download the `.dmg` file for x64
             **Windows:** Download the `.msi` or `.exe` installer
             **Linux:** Download the `.deb` or `.AppImage` file
+
+            ## Auto-Update
+
+            If you already have Envault installed (v0.2.0+), the app will automatically notify you of this update.
           releaseDraft: false
           prerelease: false
+          updaterJsonKeepUniversal: true
           args: ${{ matrix.args }}

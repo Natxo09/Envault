@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +12,12 @@ import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Settings, Check } from "lucide-react";
+import { Settings, Check, RefreshCw, Download } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { usePreferences } from "@/hooks/use-preferences";
+import { useUpdater } from "@/hooks/use-updater";
 import { getShortcutsByCategory, formatShortcut, type Shortcut } from "@/lib/shortcuts";
+import { Button } from "@/components/ui/button";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -168,12 +171,28 @@ const categoryLabels: Record<string, string> = {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme();
-  const { toastsEnabled, setToastsEnabled } = usePreferences();
+  const { toastsEnabled, setToastsEnabled, autoCheckUpdates, setAutoCheckUpdates } = usePreferences();
+  const {
+    checking,
+    available,
+    update,
+    downloading,
+    progress,
+    error: updateError,
+    checkForUpdates,
+    downloadAndInstall,
+  } = useUpdater(false); // Don't auto-check, we'll do it manually
   const shortcutsByCategory = getShortcutsByCategory();
   const [focusedIndex, setFocusedIndex] = useState(() =>
     themeOptions.findIndex(o => o.value === theme)
   );
+  const [appVersion, setAppVersion] = useState<string>("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Get app version on mount
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => setAppVersion("unknown"));
+  }, []);
 
   // Reset focus index when dialog opens
   useEffect(() => {
@@ -277,6 +296,79 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 onCheckedChange={setToastsEnabled}
               />
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Updates Section */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Updates</Label>
+
+            {/* Version info */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Current version</span>
+              <span className="font-mono">{appVersion || "..."}</span>
+            </div>
+
+            {/* Auto-check toggle */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-sm">Check automatically</span>
+                <p className="text-xs text-muted-foreground">
+                  Check for updates on startup
+                </p>
+              </div>
+              <Switch
+                checked={autoCheckUpdates}
+                onCheckedChange={setAutoCheckUpdates}
+              />
+            </div>
+
+            {/* Update status */}
+            {available && update && (
+              <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Update available</span>
+                  <span className="font-mono text-sm text-primary">{update.version}</span>
+                </div>
+                {downloading ? (
+                  <div className="space-y-1.5">
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {progress < 100 ? `Downloading... ${progress}%` : "Installing..."}
+                    </p>
+                  </div>
+                ) : (
+                  <Button size="sm" className="w-full" onClick={downloadAndInstall}>
+                    <Download className="size-3.5 mr-1.5" />
+                    Install Update
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {updateError && (
+              <p className="text-xs text-destructive">{updateError}</p>
+            )}
+
+            {/* Check button */}
+            {!available && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={checkForUpdates}
+                disabled={checking}
+              >
+                <RefreshCw className={cn("size-3.5 mr-1.5", checking && "animate-spin")} />
+                {checking ? "Checking..." : "Check for Updates"}
+              </Button>
+            )}
           </div>
 
           <Separator />

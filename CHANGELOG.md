@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-01-12
+
+### Added
+- **Auto-Update System**: Automatic update detection and installation via GitHub Releases
+  - Background check for updates on startup (configurable)
+  - Update notification with download progress
+  - One-click install and restart
+  - Manual "Check for Updates" button in Settings
+- **Updates Section in Settings**: View current version and check for updates
+- Signed releases for secure update verification
+
+### Changed
+- App name now displays as "Envault" (capitalized) consistently across all platforms
+
 ## [0.1.1] - 2026-01-12
 
 ### Added
@@ -41,5 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SQLite database with migrations for project persistence
 - Tauri commands for project and env file management
 
+[0.2.0]: https://github.com/Natxo09/envault/releases/tag/v0.2.0
 [0.1.1]: https://github.com/Natxo09/envault/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Natxo09/envault/releases/tag/v0.1.0
