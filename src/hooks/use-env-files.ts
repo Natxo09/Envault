@@ -13,6 +13,7 @@ export function useEnvFiles() {
   const [selectedEnvFile, setSelectedEnvFile] = useState<EnvFile | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,6 +101,55 @@ export function useEnvFiles() {
     []
   );
 
+  // Refresh without clearing selection (for manual refresh)
+  const refreshEnvFiles = useCallback(
+    async (projectPath: string, activeEnv?: string | null) => {
+      setIsRefreshing(true);
+      setError(null);
+
+      // Minimum animation duration (500ms for a nice spin)
+      const minDuration = 500;
+      const startTime = Date.now();
+
+      try {
+        const files = await invoke<EnvFile[]>("scan_env_files", {
+          projectPath,
+          activeEnv: activeEnv ?? null,
+        });
+        setEnvFiles(files);
+
+        // Update selected file if it still exists (might have changed)
+        if (selectedPathRef.current) {
+          const updatedFile = files.find(f => f.path === selectedPathRef.current);
+          if (updatedFile) {
+            setSelectedEnvFile(updatedFile);
+            // Reload content in case it changed
+            const content = await invoke<string>("read_env_file", {
+              filePath: updatedFile.path,
+            });
+            setFileContent(content);
+          } else {
+            // File was deleted, clear selection
+            selectedPathRef.current = null;
+            setSelectedEnvFile(null);
+            setFileContent(null);
+          }
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        // Ensure minimum animation duration
+        const elapsed = Date.now() - startTime;
+        const remaining = minDuration - elapsed;
+        if (remaining > 0) {
+          await new Promise(resolve => setTimeout(resolve, remaining));
+        }
+        setIsRefreshing(false);
+      }
+    },
+    []
+  );
+
   const clearSelection = useCallback(() => {
     selectedPathRef.current = null;
     setSelectedEnvFile(null);
@@ -115,9 +165,11 @@ export function useEnvFiles() {
     selectedEnvFile,
     fileContent,
     isLoading,
+    isRefreshing,
     isLoadingContent,
     error,
     scanEnvFiles,
+    refreshEnvFiles,
     selectEnvFile,
     activateEnvFile,
     clearSelection,

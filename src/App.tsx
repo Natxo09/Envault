@@ -205,9 +205,11 @@ function AppContent() {
     selectedEnvFile,
     fileContent,
     isLoading: isLoadingEnvFiles,
+    isRefreshing,
     isLoadingContent,
     error: envError,
     scanEnvFiles,
+    refreshEnvFiles,
     selectEnvFile,
     activateEnvFile,
     clearSelection,
@@ -268,10 +270,11 @@ function AppContent() {
   }, [envFiles, selectedProject, activateEnvFile, setSelectedProject]);
 
   const handleEnvListRefresh = useCallback(() => {
-    if (selectedProject) {
-      scanEnvFiles(selectedProject.path, selectedProject.active_environment);
+    if (selectedProject && !isRefreshing) {
+      refreshEnvFiles(selectedProject.path, selectedProject.active_environment);
+      toast.success("Refreshing environment files");
     }
-  }, [selectedProject, scanEnvFiles]);
+  }, [selectedProject, isRefreshing, refreshEnvFiles]);
 
   const handleEnvListCopy = useCallback(async () => {
     if (fileContent) {
@@ -408,6 +411,7 @@ function AppContent() {
               selectedEnvFile={selectedEnvFile}
               fileContent={fileContent}
               isLoading={isLoadingEnvFiles}
+              isRefreshing={isRefreshing}
               isLoadingContent={isLoadingContent}
               error={envError}
               focusedIndex={envListIndex}

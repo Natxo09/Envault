@@ -109,7 +109,8 @@ export const DEFAULT_SHORTCUTS: Record<string, Shortcut> = {
   },
   refreshEnvList: {
     id: "refreshEnvList",
-    key: "R",
+    key: "r",
+    metaKey: true,
     description: "Refresh List",
     category: "envFiles",
   },

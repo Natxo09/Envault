@@ -205,7 +205,7 @@ export function useFocusManager({
 
         case "r":
         case "R":
-          if (activeZone === "envList") {
+          if (activeZone === "envList" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
             onEnvListRefresh?.();
           }

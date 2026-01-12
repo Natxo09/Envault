@@ -11,6 +11,7 @@ interface EnvFilesPanelProps {
   selectedEnvFile: EnvFile | null;
   fileContent: string | null;
   isLoading: boolean;
+  isRefreshing: boolean;
   isLoadingContent: boolean;
   error: string | null;
   focusedIndex: number;
@@ -29,6 +30,7 @@ export function EnvFilesPanel({
   selectedEnvFile,
   fileContent,
   isLoading,
+  isRefreshing,
   isLoadingContent,
   error,
   focusedIndex,
@@ -53,7 +55,6 @@ export function EnvFilesPanel({
 
   const handleRefresh = () => {
     onRefresh();
-    toast.success("Environment files refreshed");
   };
 
   const handleCopy = () => {
@@ -93,6 +94,7 @@ export function EnvFilesPanel({
           selectedFile={selectedEnvFile}
           focusedIndex={focusedIndex}
           isLoading={isLoading}
+          isRefreshing={isRefreshing}
           isActive={isActive}
           onSelect={onSelect}
           onActivate={handleActivate}

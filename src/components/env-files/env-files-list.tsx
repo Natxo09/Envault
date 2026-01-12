@@ -17,6 +17,7 @@ interface EnvFilesListProps {
   selectedFile: EnvFile | null;
   focusedIndex: number;
   isLoading: boolean;
+  isRefreshing: boolean;
   isActive: boolean;
   onSelect: (file: EnvFile) => void;
   onActivate: (index: number) => void;
@@ -38,6 +39,7 @@ export function EnvFilesList({
   selectedFile,
   focusedIndex,
   isLoading,
+  isRefreshing,
   isActive,
   onSelect,
   onActivate,
@@ -92,9 +94,10 @@ export function EnvFilesList({
             size="icon"
             className="size-6"
             onClick={onRefresh}
-            title="Refresh (R)"
+            disabled={isRefreshing}
+            title="Refresh (⌘R)"
           >
-            <RefreshCw className="size-3" />
+            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
           </Button>
         </div>
       </div>
