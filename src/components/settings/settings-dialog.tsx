@@ -6,9 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Kbd } from "@/components/ui/kbd";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Settings, Check } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { getShortcuts, formatShortcut, type Shortcut } from "@/lib/shortcuts";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -130,6 +133,23 @@ function ThemePreview({ variant, isSelected, onClick, label }: ThemePreviewProps
   );
 }
 
+function ShortcutItem({ shortcut }: { shortcut: Shortcut }) {
+  const keys = formatShortcut(shortcut);
+
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <span className="text-sm text-muted-foreground">{shortcut.description}</span>
+      <div className="flex items-center gap-1">
+        {keys.map((key, index) => (
+          <Kbd key={index} size="sm">
+            {key}
+          </Kbd>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const themeOptions = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
@@ -138,6 +158,7 @@ const themeOptions = [
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { theme, setTheme } = useTheme();
+  const shortcuts = getShortcuts();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,10 +168,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <Settings className="h-5 w-5" />
             Settings
           </DialogTitle>
-          <DialogDescription>Customize the application appearance</DialogDescription>
+          <DialogDescription>Customize the application</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-6 py-4">
+          {/* Theme Section */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">Theme</Label>
             <div className="grid grid-cols-3 gap-3">
@@ -162,6 +184,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   isSelected={theme === option.value}
                   onClick={() => setTheme(option.value)}
                 />
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Keyboard Shortcuts Section */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Keyboard Shortcuts</Label>
+            <div className="space-y-1">
+              {Object.values(shortcuts).map((shortcut) => (
+                <ShortcutItem key={shortcut.id} shortcut={shortcut} />
               ))}
             </div>
           </div>

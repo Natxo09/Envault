@@ -11,12 +11,14 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarProvider,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Folder, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
+import { getShortcuts } from "@/lib/shortcuts";
 
 function AppSidebar({ onSettingsOpen }: { onSettingsOpen: () => void }) {
   return (
@@ -58,16 +60,28 @@ function AppSidebar({ onSettingsOpen }: { onSettingsOpen: () => void }) {
   );
 }
 
-function App() {
-  const { resolvedTheme } = useTheme();
+function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { toggleSidebar } = useSidebar();
+  const shortcuts = getShortcuts();
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
     {
-      key: ",",
-      metaKey: true,
+      key: shortcuts.openSettings.key,
+      metaKey: shortcuts.openSettings.metaKey,
+      ctrlKey: shortcuts.openSettings.ctrlKey,
+      shiftKey: shortcuts.openSettings.shiftKey,
+      altKey: shortcuts.openSettings.altKey,
       handler: () => setSettingsOpen(true),
+    },
+    {
+      key: shortcuts.toggleSidebar.key,
+      metaKey: shortcuts.toggleSidebar.metaKey,
+      ctrlKey: shortcuts.toggleSidebar.ctrlKey,
+      shiftKey: shortcuts.toggleSidebar.shiftKey,
+      altKey: shortcuts.toggleSidebar.altKey,
+      handler: () => toggleSidebar(),
     },
     {
       key: "Escape",
@@ -76,13 +90,7 @@ function App() {
   ]);
 
   return (
-    <SidebarProvider
-      defaultOpen={true}
-      className={`${resolvedTheme} h-screen overflow-hidden`}
-      style={{
-        "--sidebar-width": "16rem",
-      } as React.CSSProperties}
-    >
+    <>
       <AppSidebar onSettingsOpen={() => setSettingsOpen(true)} />
       {/* Top frame area - drag region with add button */}
       <div
@@ -105,6 +113,22 @@ function App() {
 
       {/* Settings Dialog */}
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
+  );
+}
+
+function App() {
+  const { resolvedTheme } = useTheme();
+
+  return (
+    <SidebarProvider
+      defaultOpen={true}
+      className={`${resolvedTheme} h-screen overflow-hidden`}
+      style={{
+        "--sidebar-width": "16rem",
+      } as React.CSSProperties}
+    >
+      <AppContent />
     </SidebarProvider>
   );
 }
