@@ -1,4 +1,6 @@
+mod commands;
 mod database;
+mod types;
 
 use database::Database;
 
@@ -11,6 +13,15 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(db)
+        .invoke_handler(tauri::generate_handler![
+            commands::add_project,
+            commands::list_projects,
+            commands::delete_project,
+            commands::update_project,
+            commands::scan_env_files,
+            commands::activate_env,
+            commands::get_active_env,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
