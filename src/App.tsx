@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,17 +12,13 @@ import {
   SidebarMenuButton,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { Folder, Settings, Plus, Moon, Sun } from "lucide-react";
+import { Folder, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { SettingsDialog } from "@/components/settings/settings-dialog";
 
-function AppSidebar({
-  theme,
-  toggleTheme,
-}: {
-  theme: "light" | "dark";
-  toggleTheme: () => void;
-}) {
+function AppSidebar({ onSettingsOpen }: { onSettingsOpen: () => void }) {
   return (
     <Sidebar variant="inset">
       {/* Drag region for macOS traffic lights - empty space */}
@@ -50,17 +47,7 @@ function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={toggleTheme}>
-              {theme === "dark" ? (
-                <Sun className="size-4" />
-              ) : (
-                <Moon className="size-4" />
-              )}
-              <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
+            <SidebarMenuButton onClick={onSettingsOpen}>
               <Settings className="size-4" />
               <span>Settings</span>
             </SidebarMenuButton>
@@ -72,17 +59,31 @@ function AppSidebar({
 }
 
 function App() {
-  const { theme, toggleTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: ",",
+      metaKey: true,
+      handler: () => setSettingsOpen(true),
+    },
+    {
+      key: "Escape",
+      handler: () => setSettingsOpen(false),
+    },
+  ]);
 
   return (
     <SidebarProvider
       defaultOpen={true}
-      className={`${theme} h-screen overflow-hidden`}
+      className={`${resolvedTheme} h-screen overflow-hidden`}
       style={{
         "--sidebar-width": "16rem",
       } as React.CSSProperties}
     >
-      <AppSidebar theme={theme} toggleTheme={toggleTheme} />
+      <AppSidebar onSettingsOpen={() => setSettingsOpen(true)} />
       {/* Top frame area - drag region with add button */}
       <div
         data-tauri-drag-region
@@ -95,10 +96,15 @@ function App() {
       <SidebarInset className="md:peer-data-[variant=inset]:mt-8">
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
-            <p className="text-muted-foreground">Select a project to manage environments</p>
+            <p className="text-muted-foreground">
+              Select a project to manage environments
+            </p>
           </div>
         </main>
       </SidebarInset>
+
+      {/* Settings Dialog */}
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </SidebarProvider>
   );
 }
