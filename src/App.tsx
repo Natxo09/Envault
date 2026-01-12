@@ -249,20 +249,31 @@ function AppContent() {
         onSettingsOpen={() => setSettingsOpen(true)}
         onAddProject={() => setAddProjectOpen(true)}
       />
-      {/* Top frame area - drag region with add button */}
+      {/* Top frame area - drag region with project indicator and add button */}
       <div
         data-tauri-drag-region
-        className="absolute top-0 right-2 left-[calc(var(--sidebar-width)+0.5rem)] h-8 flex items-center justify-end px-3 z-10"
+        className="absolute top-0 right-2 h-8 flex items-center justify-center px-3 z-10 transition-[left] duration-150 ease-linear peer-data-[state=expanded]:left-[calc(var(--sidebar-width)+0.5rem)] peer-data-[state=collapsed]:left-[calc(var(--sidebar-width-icon)+1rem)]"
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7"
-          onClick={() => setAddProjectOpen(true)}
-          title="Add Project (⌘N)"
-        >
-          <Plus className="size-4" />
-        </Button>
+        {selectedProject ? (
+          <div data-tauri-drag-region className="flex items-center gap-1.5 text-sm pointer-events-none">
+            {(() => {
+              const Icon = getIconById(selectedProject.icon);
+              return <Icon className="size-3.5" style={{ color: selectedProject.icon_color }} />;
+            })()}
+            <span className="text-muted-foreground">{selectedProject.name}</span>
+          </div>
+        ) : null}
+        <div data-tauri-drag-region className="absolute right-3 top-1/2 -translate-y-1/2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => setAddProjectOpen(true)}
+            title="Add Project (⌘N)"
+          >
+            <Plus className="size-4" />
+          </Button>
+        </div>
       </div>
       <SidebarInset className="md:peer-data-[variant=inset]:mt-8">
         <main className="flex-1 flex items-center justify-center p-4">
