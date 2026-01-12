@@ -420,7 +420,7 @@ function AppContent() {
           )}
         </div>
       </div>
-      <SidebarInset className="md:peer-data-[variant=inset]:mt-8 flex flex-col h-full">
+      <SidebarInset className="md:peer-data-[variant=inset]:mt-8 flex flex-col">
         <main className="flex-1 p-4 overflow-y-auto min-h-0 scrollbar-thin">
           {selectedProject ? (
             <EnvFilesPanel
